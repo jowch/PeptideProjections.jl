@@ -1,0 +1,9 @@
+name = "PeptideProjections"
+uuid = "616915ae-382f-4b02-a1fe-078270f89671"
+authors = ["Jonathan Chen <jwhc@ucla.edu>"]
+version = "0.1.0"
+
+[deps]
+BioSequences = "7e6ae17a-c86d-528c-b3b9-7f778a29fe59"
+CairoMakie = "13f3f980-e62b-5c42-98c6-ff1f3baf88f0"
+DataStructures = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
