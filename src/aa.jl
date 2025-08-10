@@ -1,77 +1,84 @@
 using DataStructures
 
-RESIDUES_PER_TURN = 3.6
+const RESIDUES_PER_TURN = 3.6
+const RADIANS_PER_TURN = 2π / RESIDUES_PER_TURN
+const DEGREES_PER_TURN = rad2deg(RADIANS_PER_TURN)
 
-SPECIAL = Set((AA_C, AA_G, AA_P))
-HYDROPHOBIC = Set((AA_A, AA_F, AA_I, AA_L, AA_M, AA_V, AA_Y, AA_W))
-POSITIVE = Set((AA_H, AA_K, AA_R))
-NEGATIVE = Set((AA_D, AA_E))
+SPECIAL = Set(('C', 'G', 'P'))
+HYDROPHOBIC = Set(('A', 'F', 'I', 'L', 'M', 'V', 'Y', 'W'))
+POSITIVE = Set(('H', 'K', 'R'))
+NEGATIVE = Set(('D', 'E'))
 CHARGED = union(POSITIVE, NEGATIVE)
-POLAR = union(CHARGED, (AA_S, AA_T, AA_N, AA_Q))
+POLAR = union(CHARGED, ('S', 'T', 'N', 'Q'))
 
-isspecial(aa::AminoAcid) = aa ∈ SPECIAL
-ishydrophobic(aa::AminoAcid) = aa ∈ HYDROPHOBIC
-ispositive(aa::AminoAcid) = aa ∈ POSITIVE
-isnegative(aa::AminoAcid) = aa ∈ NEGATIVE
-ischarged(aa::AminoAcid) = aa ∈ CHARGED
-ispolar(aa::AminoAcid) = aa ∈ POLAR
+isspecial(aa::AbstractChar) = aa ∈ SPECIAL
+ishydrophobic(aa::AbstractChar) = aa ∈ HYDROPHOBIC
+ispositive(aa::AbstractChar) = aa ∈ POSITIVE
+isnegative(aa::AbstractChar) = aa ∈ NEGATIVE
+ischarged(aa::AbstractChar) = aa ∈ CHARGED
+ispolar(aa::AbstractChar) = aa ∈ POLAR
 
+# TODO: use AAindex for these
 MOLECULAR_WEIGHTS = DefaultDict(89,
-    AA_A => 89,
-    AA_R => 174,
-    AA_N => 132,
-    AA_D => 133,
-    AA_C => 121,
-    AA_Q => 146,
-    AA_E => 147,
-    AA_G => 75,
-    AA_H => 155,
-    AA_I => 131,
-    AA_L => 131,
-    AA_K => 146,
-    AA_M => 149,
-    AA_F => 165,
-    AA_P => 115,
-    AA_S => 105,
-    AA_T => 119,
-    AA_W => 204,
-    AA_Y => 181,
-    AA_V => 117
+    'A' => 89,
+    'R' => 174,
+    'N' => 132,
+    'D' => 133,
+    'C' => 121,
+    'Q' => 146,
+    'E' => 147,
+    'G' => 75,
+    'H' => 155,
+    'I' => 131,
+    'L' => 131,
+    'K' => 146,
+    'M' => 149,
+    'F' => 165,
+    'P' => 115,
+    'S' => 105,
+    'T' => 119,
+    'W' => 204,
+    'Y' => 181,
+    'V' => 117
 )
 
 MIN_MW = minimum(values(MOLECULAR_WEIGHTS))
 MAX_MW = maximum(values(MOLECULAR_WEIGHTS))
 
-function molecularweight(aa::AminoAcid; scaled = false)
+function molecularweight(aa::AbstractChar; scaled = false)
     scaled ? rescale(MOLECULAR_WEIGHTS[aa], MIN_MW, MAX_MW) : MOLECULAR_WEIGHTS[aa]
 end
 
+function molecularweight(seq::AbstractString; scaled = false)
+    scaled ? rescale(sum(molecularweight, seq), MIN_MW, MAX_MW) : sum(molecularweight, seq)
+end
+
 VOLUMES = DefaultDict(88.6, 
-    AA_A => 88.6,
-    AA_R => 173.4,
-    AA_N => 114.1,
-    AA_D => 111.1,
-    AA_C => 108.0,
-    AA_Q => 143.8,
-    AA_E => 138.4,
-    AA_G => 60.1,
-    AA_H => 153.2,
-    AA_I => 166.0,
-    AA_L => 166.0,
-    AA_K => 168.6,
-    AA_M => 162.0,
-    AA_F => 189.0,
-    AA_P => 112.7,
-    AA_S => 89.0,
-    AA_T => 116.1,
-    AA_W => 227.8,
-    AA_Y => 193.6,
-    AA_V => 140.0
+    'A' => 88.6,
+    'R' => 173.4,
+    'N' => 114.1,
+    'D' => 111.1,
+    'C' => 108.0,
+    'Q' => 143.8,
+    'E' => 138.4,
+    'G' => 60.1,
+    'H' => 153.2,
+    'I' => 166.0,
+    'L' => 166.0,
+    'K' => 168.6,
+    'M' => 162.0,
+    'F' => 189.0,
+    'P' => 112.7,
+    'S' => 89.0,
+    'T' => 116.1,
+    'W' => 227.8,
+    'Y' => 193.6,
+    'V' => 140.0
 )
 
 MIN_VOLUME = minimum(values(VOLUMES))
 MAX_VOLUME = maximum(values(VOLUMES))
 
-function volume(aa::AminoAcid; scaled = false)
+function volume(aa::AbstractChar; scaled = false)
     scaled ? rescale(VOLUMES[aa], MIN_VOLUME, MAX_VOLUME) : VOLUMES[aa]
 end

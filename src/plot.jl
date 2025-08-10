@@ -1,83 +1,121 @@
 
-COLOR_POSITIVE = :dodgerblue
-COLOR_NEGATIVE = :tomato
-COLOR_POLAR = :lightgreen
-COLOR_HYDROPHOBIC = :gold
+abstract type Wheel end
+abstract type Net end
 
-function color(aa::AminoAcid)
-    if ispositive(aa)
-        return COLOR_POSITIVE
-    elseif isnegative(aa)
-        return COLOR_NEGATIVE
-    elseif ispolar(aa)
-        return COLOR_POLAR
-    elseif ishydrophobic(aa)
-        return COLOR_HYDROPHOBIC
-    else
-        return :darkgray
-    end
+"""
+    turn(i, rot)
+
+Calculate the vertical position of the i-th residue on the wheel.
+"""
+turn(::Type{Wheel}, i, rot) = sin.((i .- 1) * RADIANS_PER_TURN .- rot)
+
+"""
+    sizefn(i, rot; s = 10)
+
+Calculate the size of the i-th residue on the wheel.
+"""
+sizefn(::Type{Wheel}, i, rot; s = 10) = s * (cos.((i .- 1) * RADIANS_PER_TURN .- rot) / 4 .+ 0.75)
+
+"""
+    plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful)
+
+Plot the wheel on the given axis.
+"""
+function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
+	num_full_cycles = 0
+
+	for (i, aa) in enumerate(seq)
+		angle = (i - 1) * RADIANS_PER_TURN - rot
+
+		# increment num_full_cycles when we fill all of the possible positions
+		# in the first loop
+		if angle % (2π) == 0
+			num_full_cycles += 1
+		end
+
+		radius = 1 + num_full_cycles * 0.5
+
+		x = radius * sin(angle)
+		y = radius * cos(angle)
+
+		c = Themes.color(theme, aa)
+		scatter!(
+			ax, x, y;
+			color = c, strokecolor = darken(c, 0.1), strokewidth = 1,
+			markersize = 0.2 * scale
+		)
+		text!(
+			ax, x, y; text = string(aa), align = (:center, :center),
+			offset = (0, 2),
+			color = Themes.textcolor(theme, aa), fontsize = 10, font = :bold
+		)
+		text!(
+			ax, x, y; text = string(i), align = (:center, :top),
+			offset = (0, -2),
+			color = Themes.textcolor(theme, aa), fontsize = 5, font = :bold
+		)
+	end
+
+	nothing
 end
 
-function plotwheel!(
-    ax, seq::LongAA;
-    rot = 0, label = true, sizefn = volume,
-    minsize = 0.15, maxsize = 0.5
-)
-    is = length(seq):-1:1
-    xs = sin.((is .- 1) ./ RESIDUES_PER_TURN .* 2π .- rot)
-    ys = cos.((is .- 1) ./ RESIDUES_PER_TURN .* 2π .- rot)
-    ss = sizefn.(seq[is]; scaled = true) |> rescale(; lo = minsize, hi = maxsize)
-    cs = color.(seq[is])
+"""
+	plotwheel(seq::AbstractString, rot = 0; scale = 150, kwargs...)
 
-    lines!(xs, ys, linewidth = 2, color = xs, colormap = :Greys_3)
+Plot the wheel on a new figure. See `plotwheel!` for more details.
+"""
+function plotwheel(seq::AbstractString, rot = 0; scale = 150, kwargs...)
+	f = Figure(size = scale .* (15, 4))
+	ax = Axis(f[1, 1], yticks = ([-π/2, 0, π/2], ["-π/2", "0", "π/2"]))
 
-    for (i, x, y, s, c) ∈ zip(is, xs, ys, ss, cs)
-        poly!(
-            ax, Circle(Point2f(x, y), s);
-            color = c, strokewidth = 2, strokecolor = :black
-        )
+	plotwheel!(ax, seq, rot; kwargs...)
 
-        if label
-            text!(
-                ax, string(seq[i]), position = (x, y), align = (:center, :center),
-                justification = :center, textsize = 7 * (1 + s)
-            )
-        end
-    end
+	f
 end
 
-# TODO: Use Makie plot recipes
-function plotprofile!(
-    ax, seq::LongAA;
-    rot = 0, label = true, sizefn = volume,
-    minsize = 0.15, maxsize = 0.5
-)
-    ax.xticks = 1:length(seq)
-    xs = 1:0.01:length(seq)
 
-    lines!(
-        ax, xs, cos.((xs .- 1) ./ RESIDUES_PER_TURN .* 2π .- rot),
-        color = sin.((xs .- 1) ./ RESIDUES_PER_TURN .* 2π .- rot),
-        linewidth = 5, colormap = :Greys_3
-    )
+turn(::Type{Net}, i, rot) = mod.(i .- rot, 2π / RADIANS_PER_TURN)
 
-    colors = color.(seq)
-    sizes = sizefn.(seq; scaled = true) |> rescale(; lo = minsize, hi = maxsize)
+"""
+	plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
 
-    for (x, (c, s)) in enumerate(zip(colors, sizes))
-        y = cos((x - 1) / RESIDUES_PER_TURN * 2π - rot)
-        poly!(
-            ax, Circle(Point2f(x, y), s);
-            color = c, strokewidth = 2, strokecolor = :black
-        )
+Plot the net on the given axis.
+"""
+function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
+	for (i, aa) in enumerate(seq)
+		c = Themes.color(theme, aa)
+		scatter!(
+			ax, i, turn(Net, i, rot);
+			color = c, strokecolor = darken(c, 0.1), strokewidth = 1,
+			markersize = 0.2 * scale
+		)
+		text!(
+			ax, i, turn(Net, i, rot); text = string(aa), align = (:center, :center),
+			offset = (0, 2),
+			color = Themes.textcolor(theme, aa), fontsize = 10, font = :bold
+		)
+		text!(
+			ax, i, turn(Net, i, rot); text = string(i), align = (:center, :top),
+			offset = (0, -2),
+			color = Themes.textcolor(theme, aa), fontsize = 5, font = :bold
+		)
+	end
 
-        if label
-            text!(
-                ax, string(seq[x]), position = (x, y), align = (:center, :center),
-                justification = :center, textsize = 8 * (1 + s)
-            )
-        end
-    end
+	nothing
+end
 
-    ax
+"""
+	plotnet(seq::AbstractString, rot = 0; scale = 150, kwargs...)
+
+Plot the net on a new figure. See `plotnet!` for more details.
+"""
+function plotnet(seq::AbstractString, rot = 0; scale = 150, kwargs...)
+	f = Figure(size = scale .* (length(seq) / 15, 1))
+	ax = Axis(f[1, 1])
+
+	plotnet!(ax, seq, rot; scale, kwargs...)
+
+	hidedecorations!(ax)
+	
+	f
 end
