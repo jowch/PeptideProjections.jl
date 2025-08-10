@@ -24,34 +24,12 @@ plotnet("LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES", theme=ColorfulHydropathy)
 
 ## Available Themes
 
-### 1. Colorful Theme
+1. Colorful - Highlights different amino acid properties with distinct colors
+2. ColorfulHydropathy - Emphasizes hydropathy while maintaining charge information
+3. Hydropathy - Emphasizes hydropathy with hydrophobic residues in black and polar residues in red
 
-Highlights different amino acid properties with distinct colors:
-
-- Positive (H, K, R): Blue
-- Negative (D, E): Orange
-- Polar (S, T, N, Q): Green
-- Hydrophobic (A, F, I, L, M, V, Y, W): Gold
-- Special (C, G, P): Gray
-
-<!-- ![Colorful Theme](docs/src/assets/colorful_theme.png) -->
-
-### 2. ColorfulHydropathy Theme
-
-Emphasizes hydropathy while maintaining charge information:
-
-- Hydrophobic: Black
-- Positive: Blue
-- Negative: Orange
-- Others: Green
-
-<!-- ![ColorfulHydropathy Theme](docs/src/assets/colorful_hydropathy_theme.png) -->
-
-### 3. Hydropathy Theme
-
-Emphasizes hydropathy with hydrophobic residues in black and polar residues in red
-
-<!-- ![Hydropathy Theme](docs/src/assets/hydropathy_theme.png) -->
+![wheel examples](examples/ll37-wheels.png)
+![net examples](examples/ll37-nets.png)
 
 ## API Reference
 
