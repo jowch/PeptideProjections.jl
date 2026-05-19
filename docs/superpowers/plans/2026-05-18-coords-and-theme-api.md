@@ -27,6 +27,10 @@ top-level `@testset`. `Point2f` and `Figure` come from CairoMakie, which is a
 dependency of the package and so resolvable in the test environment once added
 to `test/Project.toml`.
 
+**Indentation:** files under `src/` use **tabs**. The code blocks in this plan
+are shown with spaces for readability — when you paste them in, re-indent with
+tabs to match the surrounding file.
+
 ---
 
 ## File Structure
@@ -62,10 +66,11 @@ then exports the new names plus the helix geometry constants.
 - [ ] **Step 1: Update the theme tests to the new names**
 
 In `test/themes.jl`, replace every occurrence of `Themes.color(` with
-`Themes.themecolor(` and every occurrence of `Themes.textcolor(` with
-`Themes.themetextcolor(`. (Use an editor replace-all; there are ~10 of the
-first and ~5 of the second. The color-constant tests like
-`Themes.COLOR_POSITIVE` are unaffected.)
+`Themes.themecolor(` (17 occurrences) and every occurrence of
+`Themes.textcolor(` with `Themes.themetextcolor(` (5 occurrences). Use a
+case-*sensitive* replace-all: the color-constant tests like
+`Themes.COLOR_POSITIVE` contain the substring `color` and must be left
+untouched.
 
 - [ ] **Step 2: Run the theme tests to verify they fail**
 
@@ -268,9 +273,10 @@ end
 """
     wheelcoords(seq::AbstractString, rot = 0) -> Vector{Point2f}
 
-Idealized helical-wheel placement. Residue `i` is placed on a spiral whose
-radius grows by `0.5` each full turn. Used as the default `coords` for
-[`plotwheel!`](@ref); supply a custom vector to plot measured positions instead.
+Idealized helical-wheel placement, reproducing `plotwheel`'s existing spiral
+layout verbatim (the radius steps out by `0.5` for each completed full turn).
+Used as the default `coords` for [`plotwheel!`](@ref); supply a custom vector to
+plot measured positions instead.
 """
 function wheelcoords(seq::AbstractString, rot = 0)
     coords = Point2f[]
@@ -369,7 +375,9 @@ Expected: FAIL — `plotnet!` does not accept a `coords` keyword
 
 - [ ] **Step 3: Add the shared drawing helper**
 
-In `src/plot.jl`, immediately before the `plotwheel!` definition, insert:
+In `src/plot.jl`, immediately before the `plotwheel!` **docstring** — not
+between the docstring and its `function` line, which would detach the
+docstring — insert:
 
 ```julia
 # Draw one themed marker plus residue-letter and index labels per residue at
@@ -419,6 +427,8 @@ function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 
         "coords has $(length(coords)) points but seq has $(length(seq)) residues"))
 
     _drawresidues!(ax, seq, coords; theme, scale)
+
+    nothing
 end
 ```
 
@@ -442,6 +452,8 @@ function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 15
         "coords has $(length(coords)) points but seq has $(length(seq)) residues"))
 
     _drawresidues!(ax, seq, coords; theme, scale)
+
+    nothing
 end
 ```
 
@@ -449,12 +461,24 @@ end
 `kwargs...` to the mutating form, so a caller-supplied `coords` passes straight
 through.)
 
-- [ ] **Step 6: Run the tests to verify they pass**
+- [ ] **Step 6: Remove the superseded `turn(::Type{Net}, ...)` method**
+
+In `src/plot.jl`, delete the line
+
+```julia
+turn(::Type{Net}, i, rot) = mod.(i .- rot, 2π / RADIANS_PER_TURN)
+```
+
+It encoded the old residues-per-turn net coordinate and had only one caller
+(`plotnet!`), which no longer uses it. The `Wheel` `turn`/`sizefn` methods and
+the `Wheel`/`Net` abstract types stay (out of scope).
+
+- [ ] **Step 7: Run the tests to verify they pass**
 
 Run: `julia --project -e 'using Pkg; Pkg.test()'`
 Expected: PASS — including the `Rendering and coords override` testset.
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 8: Commit**
 
 ```bash
 git add src/plot.jl test/coords.jl

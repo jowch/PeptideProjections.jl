@@ -31,14 +31,31 @@ residues-per-turn to **radians**. Residue *i* is placed at
 
     y = mod((i - 1) * RADIANS_PER_TURN - rot, 2π)
 
-instead of the previous `(i - rot) mod 3.6`. This makes the idealized net and
-PeptideGraphs' measured `θ` (radians, from cylindrical side-chain positions)
-share one coordinate system, so supplying measured coords is a true drop-in
-rather than a rescaled approximation.
+instead of the previous `(i - rot) mod 3.6`.
 
-The standalone net's appearance is essentially unchanged: `plotnet` hides axis
-decorations, so only the y-scale changes (`[0, 3.6)` → `[0, 2π)`); relative
-marker spacing within a column is preserved up to scale.
+The angular coordinate is the *only* coordinate shared with PeptideGraphs.
+`netcoords` returns `Point2f(i, θ)` with the sequence index on x, whereas
+PeptideGraphs' measured layout is `Point2f(z, θ)` with the axial coordinate on
+x. The renderer itself is coordinate-agnostic — it scatters whatever `Point2f`s
+it is handed — so what must agree for measured coords to render correctly is
+the **angular convention**: the y coordinate is an angle in radians with period
+`2π`. PeptideGraphs feeds `Point2f(z, θ)` and gets the same themed markers; it
+is not a literal drop-in of `netcoords` output, it is a different x with the
+same y convention.
+
+`netcoords`' y values are `mod`-wrapped into `[0, 2π)`, so consecutive residues
+can jump across the `0`/`2π` seam. A consumer drawing edges between residues
+must unwrap across that seam itself (the ±2π logic prototyped in PeptideGraphs'
+`reference.jl`); `netcoords` does not unwrap.
+
+**Behavior change:** `rot` for the net was previously in residue-units; it is
+now in radians. This matches `plotwheel`/`plotwheel!`, where `rot` is already in
+radians, so the change unifies the two. Callers passing a non-default `rot` to
+`plotnet`/`plotnet!` get a different rotation — acceptable under the `0.2 → 0.3`
+minor version bump; the default `rot = 0` is unaffected. The standalone net's
+appearance is otherwise unchanged: `plotnet` hides axis decorations, so only the
+y-scale changes (`[0, 3.6)` → `[0, 2π)`); relative marker spacing within a
+column is preserved up to scale.
 
 ## Change 1 — Expose placement as data
 
@@ -58,9 +75,11 @@ functions, then delegate drawing to a shared private helper:
     _drawresidues!(ax, seq, coords; theme, scale)
 
 `_drawresidues!` does the per-residue `scatter!` (marker, stroke) plus the two
-`text!` overlays (residue letter, sequence index) — the block currently
-duplicated verbatim between the wheel and net loops. Extracting it removes the
-duplication and is the single place placement and drawing meet.
+`text!` overlays (residue letter, sequence index) — the marker/label drawing
+calls, which are near-identical between the current wheel and net loops.
+Extracting them removes the duplication and is the single place placement and
+drawing meet. `turn(::Type{Net}, ...)` in `plot.jl`, which encodes the old
+residues-per-turn net coordinate, is removed: `netcoords` supersedes it.
 
 ## Change 2 — Accept a placement override
 
@@ -103,9 +122,9 @@ Makie in a `using` context.
 
 ## Change 4 — Expose the net's angular period
 
-With the radians coordinate model, the net's angular period is exactly `2π`,
-which PeptideGraphs' existing `±2π` seam-wrapping logic uses directly — no
-dedicated period constant is needed.
+With the radians coordinate model, the net's angular period is exactly `2π` — a
+literal PeptideGraphs' seam-wrapping logic (the ±2π edge-unwrapping prototyped
+in its `reference.jl`) can use directly. No dedicated period constant is needed.
 
 The underlying helix geometry constants `RESIDUES_PER_TURN` (3.6) and
 `RADIANS_PER_TURN` (`2π / 3.6`), already `const` in `src/aa.jl`, are added to
@@ -129,5 +148,6 @@ angular coordinate has period `2π`.
 
 - The PeptideGraphs weakdep, `PeptideGraphsPeptideProjectionsExt`, and the
   edge-overlay recipe — separate work in PeptideGraphs.jl.
-- Reworking the wheel's spiral geometry or the unused `turn`/`sizefn` helpers
-  beyond what change 1's refactor requires.
+- Reworking the wheel's spiral geometry or the unused `Wheel` `turn`/`sizefn`
+  helpers. (The `Net` `turn` method *is* removed, since `netcoords` directly
+  supersedes it; the `Wheel` helpers stay untouched.)
