@@ -15,18 +15,18 @@ module Themes
     COLOR_RED = colorant"#ff0028"
 
     """
-        color(::Type{<:AbstractTheme}, aa::AbstractChar)
+        themecolor(::Type{<:AbstractTheme}, aa::AbstractChar)
 
-    Return the color for the given amino acid for provided color scheme.
+    Return the marker color for the given amino acid for the provided theme.
     """
-    color(::Type{<:AbstractTheme}, aa::AbstractChar) = colorant"darkgray"
+    themecolor(::Type{<:AbstractTheme}, aa::AbstractChar) = colorant"darkgray"
 
     """
-        textcolor(::Type{<:AbstractTheme}, aa::AbstractChar)
+        themetextcolor(::Type{<:AbstractTheme}, aa::AbstractChar)
 
-    Return the text color for the given amino acid for provided color scheme.
+    Return the label text color for the given amino acid for the provided theme.
     """
-    textcolor(::Type{<:AbstractTheme}, aa::AbstractChar) = colorant"black"
+    themetextcolor(::Type{<:AbstractTheme}, aa::AbstractChar) = colorant"black"
 
     include("hydropathy.jl")
     include("colorful.jl")

@@ -2,7 +2,7 @@
 abstract type Colorful <: AbstractTheme end
 
 
-function color(::Type{Colorful}, aa::AbstractChar)
+function themecolor(::Type{Colorful}, aa::AbstractChar)
     if ispositive(aa)
         return COLOR_POSITIVE
     elseif isnegative(aa)
@@ -19,7 +19,7 @@ function color(::Type{Colorful}, aa::AbstractChar)
     end
 end
 
-function textcolor(::Type{Colorful}, aa::AbstractChar)
+function themetextcolor(::Type{Colorful}, aa::AbstractChar)
     if ispositive(aa) || isnegative(aa)
         return colorant"white"
     #    elseif ispolar(aa)
