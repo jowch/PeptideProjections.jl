@@ -51,28 +51,11 @@ Calculate the size of the i-th residue on the wheel.
 """
 sizefn(::Type{Wheel}, i, rot; s = 10) = s * (cos.((i .- 1) * RADIANS_PER_TURN .- rot) / 4 .+ 0.75)
 
-"""
-    plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful)
-
-Plot the wheel on the given axis.
-"""
-function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
-	num_full_cycles = 0
-
+# Draw one themed marker plus residue-letter and index labels per residue at
+# the supplied coordinates. Shared by plotwheel! and plotnet!.
+function _drawresidues!(ax, seq::AbstractString, coords; theme = Colorful, scale = 150)
 	for (i, aa) in enumerate(seq)
-		angle = (i - 1) * RADIANS_PER_TURN - rot
-
-		# increment num_full_cycles when we fill all of the possible positions
-		# in the first loop
-		if angle % (2π) == 0
-			num_full_cycles += 1
-		end
-
-		radius = 1 + num_full_cycles * 0.5
-
-		x = radius * sin(angle)
-		y = radius * cos(angle)
-
+		x, y = coords[i]
 		c = Themes.themecolor(theme, aa)
 		scatter!(
 			ax, x, y;
@@ -95,6 +78,24 @@ function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 
 end
 
 """
+    plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150,
+               coords = wheelcoords(seq, rot))
+
+Plot the helical wheel on the given axis. Placement defaults to
+[`wheelcoords`](@ref); pass `coords` (a `Vector{Point2f}`, one per residue) to
+plot measured positions instead, in which case `rot` is ignored.
+"""
+function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150,
+                    coords = wheelcoords(seq, rot))
+	length(coords) == length(seq) || throw(ArgumentError(
+		"coords has $(length(coords)) points but seq has $(length(seq)) residues"))
+
+	_drawresidues!(ax, seq, coords; theme, scale)
+
+	nothing
+end
+
+"""
 	plotwheel(seq::AbstractString, rot = 0; scale = 150, kwargs...)
 
 Plot the wheel on a new figure. See `plotwheel!` for more details.
@@ -109,32 +110,20 @@ function plotwheel(seq::AbstractString, rot = 0; scale = 150, kwargs...)
 end
 
 
-turn(::Type{Net}, i, rot) = mod.(i .- rot, 2π / RADIANS_PER_TURN)
-
 """
-	plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
+    plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150,
+             coords = netcoords(seq, rot))
 
-Plot the net on the given axis.
+Plot the net on the given axis. Placement defaults to [`netcoords`](@ref); pass
+`coords` (a `Vector{Point2f}`, one per residue) to plot measured positions
+instead, in which case `rot` is ignored.
 """
-function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
-	for (i, aa) in enumerate(seq)
-		c = Themes.themecolor(theme, aa)
-		scatter!(
-			ax, i, turn(Net, i, rot);
-			color = c, strokecolor = darken(c, 0.1), strokewidth = 1,
-			markersize = 0.2 * scale
-		)
-		text!(
-			ax, i, turn(Net, i, rot); text = string(aa), align = (:center, :center),
-			offset = (0, 2),
-			color = Themes.themetextcolor(theme, aa), fontsize = 10, font = :bold
-		)
-		text!(
-			ax, i, turn(Net, i, rot); text = string(i), align = (:center, :top),
-			offset = (0, -2),
-			color = Themes.themetextcolor(theme, aa), fontsize = 5, font = :bold
-		)
-	end
+function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150,
+                  coords = netcoords(seq, rot))
+	length(coords) == length(seq) || throw(ArgumentError(
+		"coords has $(length(coords)) points but seq has $(length(seq)) residues"))
+
+	_drawresidues!(ax, seq, coords; theme, scale)
 
 	nothing
 end
