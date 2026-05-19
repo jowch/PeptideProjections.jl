@@ -6,6 +6,7 @@ const testdir = dirname(@__FILE__)
 tests = [
     "aa",
     "themes",
+    "coords",
 ]
 
 @testset "PeptideProjections" begin

@@ -3,6 +3,41 @@ abstract type Wheel end
 abstract type Net end
 
 """
+    netcoords(seq::AbstractString, rot = 0) -> Vector{Point2f}
+
+Idealized net placement. Residue `i` is placed at `Point2f(i, θ)`, where the
+angular coordinate `θ = mod((i - 1) * RADIANS_PER_TURN - rot, 2π)` has period
+`2π`. Used as the default `coords` for [`plotnet!`](@ref); supply a custom
+vector to plot measured positions instead.
+"""
+function netcoords(seq::AbstractString, rot = 0)
+	[Point2f(i, mod((i - 1) * RADIANS_PER_TURN - rot, 2π)) for (i, _) in enumerate(seq)]
+end
+
+"""
+    wheelcoords(seq::AbstractString, rot = 0) -> Vector{Point2f}
+
+Idealized helical-wheel placement, reproducing `plotwheel`'s existing spiral
+layout verbatim (the radius steps out by `0.5` for each completed full turn).
+Used as the default `coords` for [`plotwheel!`](@ref); supply a custom vector to
+plot measured positions instead.
+"""
+function wheelcoords(seq::AbstractString, rot = 0)
+	coords = Point2f[]
+	num_full_cycles = 0
+	for (i, _) in enumerate(seq)
+		angle = (i - 1) * RADIANS_PER_TURN - rot
+		# a new turn begins each time the angle returns to a multiple of 2π
+		if angle % (2π) == 0
+			num_full_cycles += 1
+		end
+		radius = 1 + num_full_cycles * 0.5
+		push!(coords, Point2f(radius * sin(angle), radius * cos(angle)))
+	end
+	coords
+end
+
+"""
     turn(i, rot)
 
 Calculate the vertical position of the i-th residue on the wheel.

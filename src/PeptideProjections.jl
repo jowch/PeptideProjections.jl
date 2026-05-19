@@ -13,6 +13,9 @@ export
     # Helix geometry constants
     RESIDUES_PER_TURN, RADIANS_PER_TURN,
 
+    # Placement
+    netcoords, wheelcoords,
+
     # Plot functions
     plotwheel, plotwheel!, plotnet, plotnet!
 
