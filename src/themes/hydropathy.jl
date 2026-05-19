@@ -1,7 +1,7 @@
 
 abstract type Hydropathy <: AbstractTheme end
 
-function color(::Type{Hydropathy}, aa::AbstractChar)
+function themecolor(::Type{Hydropathy}, aa::AbstractChar)
     if ishydrophobic(aa)
         return colorant"gray15"
     else
@@ -9,7 +9,7 @@ function color(::Type{Hydropathy}, aa::AbstractChar)
     end
 end
 
-function textcolor(::Type{Hydropathy}, aa::AbstractChar)
+function themetextcolor(::Type{Hydropathy}, aa::AbstractChar)
     if ishydrophobic(aa)
         return colorant"white"
     else

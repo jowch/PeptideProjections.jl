@@ -15,41 +15,41 @@ using PeptideProjections.Themes
     )
 
     @testset "AbstractTheme" begin
-        @test Themes.color(AbstractTheme, 'A') == colorant"darkgray"
-        @test Themes.textcolor(AbstractTheme, 'A') == colorant"black"
+        @test Themes.themecolor(AbstractTheme, 'A') == colorant"darkgray"
+        @test Themes.themetextcolor(AbstractTheme, 'A') == colorant"black"
     end
 
     @testset "Hydropathy" begin
-        @test Themes.color(Hydropathy, test_aas.hydrophobic) == colorant"gray15"
-        @test Themes.color(Hydropathy, test_aas.positive) == Themes.COLOR_RED
-        @test Themes.color(Hydropathy, test_aas.negative) == Themes.COLOR_RED
-        @test Themes.color(Hydropathy, test_aas.polar) == Themes.COLOR_RED
-        @test Themes.color(Hydropathy, test_aas.special) == Themes.COLOR_RED
-        @test Themes.color(Hydropathy, test_aas.other) == Themes.COLOR_RED
-        @test Themes.textcolor(Hydropathy, 'A') == colorant"black"  # Default implementation
+        @test Themes.themecolor(Hydropathy, test_aas.hydrophobic) == colorant"gray15"
+        @test Themes.themecolor(Hydropathy, test_aas.positive) == Themes.COLOR_RED
+        @test Themes.themecolor(Hydropathy, test_aas.negative) == Themes.COLOR_RED
+        @test Themes.themecolor(Hydropathy, test_aas.polar) == Themes.COLOR_RED
+        @test Themes.themecolor(Hydropathy, test_aas.special) == Themes.COLOR_RED
+        @test Themes.themecolor(Hydropathy, test_aas.other) == Themes.COLOR_RED
+        @test Themes.themetextcolor(Hydropathy, test_aas.positive) == colorant"black"  # Non-hydrophobic AA returns black
     end
 
     @testset "Colorful" begin
-        @test Themes.color(Colorful, test_aas.positive) == Themes.COLOR_POSITIVE
-        @test Themes.color(Colorful, test_aas.negative) == Themes.COLOR_NEGATIVE
-        @test Themes.color(Colorful, test_aas.polar) == Themes.COLOR_POLAR
-        @test Themes.color(Colorful, test_aas.hydrophobic) == Themes.COLOR_HYDROPHOBIC
-        @test Themes.color(Colorful, test_aas.special) == colorant"gray70"
-        @test Themes.color(Colorful, test_aas.other) == colorant"darkgray"
-        
+        @test Themes.themecolor(Colorful, test_aas.positive) == Themes.COLOR_POSITIVE
+        @test Themes.themecolor(Colorful, test_aas.negative) == Themes.COLOR_NEGATIVE
+        @test Themes.themecolor(Colorful, test_aas.polar) == Themes.COLOR_POLAR
+        @test Themes.themecolor(Colorful, test_aas.hydrophobic) == Themes.COLOR_HYDROPHOBIC
+        @test Themes.themecolor(Colorful, test_aas.special) == colorant"gray70"
+        @test Themes.themecolor(Colorful, test_aas.other) == colorant"darkgray"
+
         # Test text colors
-        @test Themes.textcolor(Colorful, test_aas.positive) == colorant"white"
-        @test Themes.textcolor(Colorful, test_aas.negative) == colorant"white"
-        @test Themes.textcolor(Colorful, test_aas.polar) == colorant"black"
+        @test Themes.themetextcolor(Colorful, test_aas.positive) == colorant"white"
+        @test Themes.themetextcolor(Colorful, test_aas.negative) == colorant"white"
+        @test Themes.themetextcolor(Colorful, test_aas.polar) == colorant"black"
     end
 
     @testset "ColorfulHydropathy" begin
-        @test Themes.color(ColorfulHydropathy, test_aas.hydrophobic) == colorant"gray15"
-        @test Themes.color(ColorfulHydropathy, test_aas.positive) == Themes.COLOR_POSITIVE
-        @test Themes.color(ColorfulHydropathy, test_aas.negative) == Themes.COLOR_NEGATIVE
-        @test Themes.color(ColorfulHydropathy, test_aas.polar) == Themes.COLOR_POLAR
-        @test Themes.color(ColorfulHydropathy, test_aas.special) == Themes.COLOR_POLAR  # Falls to else case
-        @test Themes.textcolor(ColorfulHydropathy, 'A') == colorant"black"  # Default implementation
+        @test Themes.themecolor(ColorfulHydropathy, test_aas.hydrophobic) == colorant"gray15"
+        @test Themes.themecolor(ColorfulHydropathy, test_aas.positive) == Themes.COLOR_POSITIVE
+        @test Themes.themecolor(ColorfulHydropathy, test_aas.negative) == Themes.COLOR_NEGATIVE
+        @test Themes.themecolor(ColorfulHydropathy, test_aas.polar) == Themes.COLOR_POLAR
+        @test Themes.themecolor(ColorfulHydropathy, test_aas.special) == Themes.COLOR_POLAR  # Falls to else case
+        @test Themes.themetextcolor(ColorfulHydropathy, test_aas.positive) == colorant"black"  # Non-hydrophobic AA returns black
     end
 
     @testset "Color Constants" begin

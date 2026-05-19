@@ -38,7 +38,7 @@ function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 
 		x = radius * sin(angle)
 		y = radius * cos(angle)
 
-		c = Themes.color(theme, aa)
+		c = Themes.themecolor(theme, aa)
 		scatter!(
 			ax, x, y;
 			color = c, strokecolor = darken(c, 0.1), strokewidth = 1,
@@ -47,12 +47,12 @@ function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 
 		text!(
 			ax, x, y; text = string(aa), align = (:center, :center),
 			offset = (0, 2),
-			color = Themes.textcolor(theme, aa), fontsize = 10, font = :bold
+			color = Themes.themetextcolor(theme, aa), fontsize = 10, font = :bold
 		)
 		text!(
 			ax, x, y; text = string(i), align = (:center, :top),
 			offset = (0, -2),
-			color = Themes.textcolor(theme, aa), fontsize = 5, font = :bold
+			color = Themes.themetextcolor(theme, aa), fontsize = 5, font = :bold
 		)
 	end
 
@@ -83,7 +83,7 @@ Plot the net on the given axis.
 """
 function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 150)
 	for (i, aa) in enumerate(seq)
-		c = Themes.color(theme, aa)
+		c = Themes.themecolor(theme, aa)
 		scatter!(
 			ax, i, turn(Net, i, rot);
 			color = c, strokecolor = darken(c, 0.1), strokewidth = 1,
@@ -92,12 +92,12 @@ function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, scale = 15
 		text!(
 			ax, i, turn(Net, i, rot); text = string(aa), align = (:center, :center),
 			offset = (0, 2),
-			color = Themes.textcolor(theme, aa), fontsize = 10, font = :bold
+			color = Themes.themetextcolor(theme, aa), fontsize = 10, font = :bold
 		)
 		text!(
 			ax, i, turn(Net, i, rot); text = string(i), align = (:center, :top),
 			offset = (0, -2),
-			color = Themes.textcolor(theme, aa), fontsize = 5, font = :bold
+			color = Themes.themetextcolor(theme, aa), fontsize = 5, font = :bold
 		)
 	end
 
