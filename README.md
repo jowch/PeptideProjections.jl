@@ -35,10 +35,23 @@ plotnet("LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES", theme=ColorfulHydropathy)
 
 ### Main Functions
 
-- `plotwheel(sequence; theme=Colorful, scale=150)` - Create a wheel projection
-- `plotwheel!(ax, sequence; theme=Colorful, scale=150)` - Add wheel projection to existing axis
-- `plotnet(sequence; theme=Colorful, scale=150)` - Create a net projection
-- `plotnet!(ax, sequence; theme=Colorful, scale=150)` - Add net projection to existing axis
+- `plotwheel(sequence, rot=0; theme=Colorful, scale=150, coords=wheelcoords(sequence, rot))` - Create a wheel projection
+- `plotwheel!(ax, sequence, rot=0; theme=Colorful, scale=150, coords=wheelcoords(sequence, rot))` - Add wheel projection to existing axis
+- `plotnet(sequence, rot=0; theme=Colorful, scale=150, coords=netcoords(sequence, rot))` - Create a net projection
+- `plotnet!(ax, sequence, rot=0; theme=Colorful, scale=150, coords=netcoords(sequence, rot))` - Add net projection to existing axis
+
+Pass `coords` (a `Vector{Point2f}`, one point per residue) to plot measured
+positions instead of the idealized helical placement.
+
+### Placement
+
+- `netcoords(sequence, rot=0) -> Vector{Point2f}` - Idealized net placement; the angular coordinate is in radians with period `2π`
+- `wheelcoords(sequence, rot=0) -> Vector{Point2f}` - Idealized helical-wheel placement
+
+### Theme Colors
+
+- `themecolor(theme, aa)` - Marker color for an amino acid under a theme
+- `themetextcolor(theme, aa)` - Label text color for an amino acid under a theme
 
 ## Contributing
 
