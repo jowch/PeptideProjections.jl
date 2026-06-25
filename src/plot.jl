@@ -51,7 +51,7 @@ Calculate the size of the i-th residue on the wheel.
 """
 sizefn(::Type{Wheel}, i, rot; s = 10) = s * (cos.((i .- 1) * RADIANS_PER_TURN .- rot) / 4 .+ 0.75)
 
-const _NET_MARKERSIZE_FRAC = 0.6
+const _NET_MARKERSIZE_FRAC = 0.85
 const _WHEEL_MARKERSIZE_FRAC = 0.75
 const _LETTER_MARKERSIZE_FRAC = 0.45   # fraction of disk diameter (data units)
 const _INDEX_MARKERSIZE_FRAC = 0.28    # subscript, relative to disk diameter
@@ -60,46 +60,48 @@ const _NET_LIMIT_PAD_FRAC = 1.0
 const _NET_Y_COMPACT_FRAC = 0.25   # retain 25% of angular (vertical) span
 const _MIN_MARKERSIZE = 0.06
 
-function _min_pairwise_spacing(coords)
-	n = length(coords)
-	n <= 1 && return 1.0
-	dmin = Inf
-	for i in 1:n, j in (i + 1):n
-		a, b = coords[i], coords[j]
-		dmin = min(dmin, hypot(a[1] - b[1], a[2] - b[2]))
-	end
-	dmin
-end
+# Fixed layout pitch (data units). Disk diameter = frac × layout cell, same for all sequences.
+const _NET_X_PITCH = 2π / 36
+const _NET_Y_PITCH = RADIANS_PER_TURN * _NET_Y_COMPACT_FRAC
+const _NET_LAYOUT_CELL = hypot(_NET_X_PITCH, _NET_Y_PITCH)
+const _WHEEL_R_MAX = 2.0
+const _WHEEL_RADIAL_STEP = 0.5   # radius increment per turn in wheelcoords
+const _WHEEL_RMAX_LAYOUT = 2.5   # outer radius of LL-37 on the ideal spiral
+const _WHEEL_LAYOUT_CELL = _WHEEL_RADIAL_STEP * _WHEEL_R_MAX / _WHEEL_RMAX_LAYOUT
 
-# Compress net x (sequence index) to ~2π span and squeeze y (angle) for a tighter panel.
+# Net: fixed index pitch on x, compressed y (angle).
 function _net_display_coords(coords)
 	xs = getindex.(coords, 1)
 	ys = getindex.(coords, 2)
-	xmin, xmax = extrema(xs)
+	xmin, _ = extrema(xs)
 	ymin, ymax = extrema(ys)
-	xspan = max(xmax - xmin, 1)
-	xscale = 2π / xspan
 	yc = (ymin + ymax) / 2
-	[Point2f((c[1] - xmin) * xscale, yc + (c[2] - yc) * _NET_Y_COMPACT_FRAC) for c in coords]
+	[Point2f((c[1] - xmin) * _NET_X_PITCH, yc + (c[2] - yc) * _NET_Y_COMPACT_FRAC) for c in coords]
+end
+
+# Wheel: scale so the outermost ring fits _WHEEL_R_MAX (constant angular slot width).
+function _wheel_display_coords(coords)
+	rs = hypot.(getindex.(coords, 1), last.(coords))
+	rmax = maximum(rs)
+	rmax <= 0 && return coords
+	s = _WHEEL_R_MAX / rmax
+	[Point2f(c[1] * s, c[2] * s) for c in coords]
 end
 
 """
     default_markersize(coords, projection) -> Float64
 
-Default residue disk **diameter** in data units. Disks are sized from the
-minimum center-to-center distance among all residue pairs so they do not overlap.
-For [`Net`](@ref), `coords` are raw placement coordinates; the same display
-compression applied by [`plotnet!`](@ref) is used internally. Pass the second
-argument as `Wheel` or `Net` (both exported).
+Default residue disk **diameter** in data units. Uses a fixed layout cell derived
+from idealized net/wheel geometry so disk size is consistent across sequence
+lengths. Pass `Wheel` or `Net` as the second argument (`coords` is accepted for
+API compatibility but not used). Override with the `markersize` keyword when
+plotting custom placements.
 """
-function default_markersize(coords, ::Type{Net})
-	display = _net_display_coords(coords)
-	max(_MIN_MARKERSIZE, _NET_MARKERSIZE_FRAC * _min_pairwise_spacing(display))
-end
+default_markersize(::Any, ::Type{Net}) =
+	max(_MIN_MARKERSIZE, _NET_MARKERSIZE_FRAC * _NET_LAYOUT_CELL)
 
-function default_markersize(coords, ::Type{Wheel})
-	max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC * _min_pairwise_spacing(coords))
-end
+default_markersize(::Any, ::Type{Wheel}) =
+	max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC * _WHEEL_LAYOUT_CELL)
 
 function _content_limits(coords, markersize; square = false, pad_frac = _NET_LIMIT_PAD_FRAC)
 	xs = getindex.(coords, 1)
@@ -154,18 +156,21 @@ Plot the helical wheel on the given axis. Placement defaults to
 plot measured positions instead, in which case `rot` is ignored.
 
 Disk **diameter** defaults from [`default_markersize`](@ref); pass `markersize`
-(data units) to override. Sets [`DataAspect`](@ref) and axis limits from disk
-extent (overwriting any prior `aspect` and `limits` on `ax`).
+(data units) to override. Coords are scaled so the outermost ring fits a fixed
+radius, giving consistent disk size across sequence lengths. Sets
+[`DataAspect`](@ref) and axis limits from disk extent (overwriting any prior
+`aspect` and `limits` on `ax`).
 """
 function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, markersize = nothing,
                     coords = wheelcoords(seq, rot))
 	length(coords) == length(seq) || throw(ArgumentError(
 		"coords has $(length(coords)) points but seq has $(length(seq)) residues"))
 
+	display = _wheel_display_coords(coords)
 	ms = something(markersize, default_markersize(coords, Wheel))
 	ax.aspect[] = DataAspect()
-	limits!(ax, _content_limits(coords, ms; square = true, pad_frac = _WHEEL_LIMIT_PAD_FRAC)...)
-	_drawresidues!(ax, seq, coords, Wheel; theme, markersize = ms)
+	limits!(ax, _content_limits(display, ms; square = true, pad_frac = _WHEEL_LIMIT_PAD_FRAC)...)
+	_drawresidues!(ax, seq, display, Wheel; theme, markersize = ms)
 
 	nothing
 end
@@ -196,9 +201,9 @@ Plot the net on the given axis. Placement defaults to [`netcoords`](@ref); pass
 instead, in which case `rot` is ignored.
 
 Disk **diameter** defaults from [`default_markersize`](@ref); pass `markersize`
-(data units) to override. The index and angular axes are compressed for a compact
-panel with [`DataAspect`](@ref). Sets axis limits from disk extent (overwriting
-any prior `aspect` and `limits` on `ax`).
+(data units) to override. The index axis uses fixed pitch and the angular axis is
+compressed for a compact panel with [`DataAspect`](@ref). Sets axis limits from
+disk extent (overwriting any prior `aspect` and `limits` on `ax`).
 """
 function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, markersize = nothing,
                   coords = netcoords(seq, rot))

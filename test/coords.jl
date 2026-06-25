@@ -1,8 +1,9 @@
 using Test
 using CairoMakie
 using PeptideProjections
-using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _WHEEL_MARKERSIZE_FRAC,
-                            _MIN_MARKERSIZE
+using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _wheel_display_coords,
+                            _NET_X_PITCH, _NET_LAYOUT_CELL, _WHEEL_LAYOUT_CELL, _WHEEL_MARKERSIZE_FRAC,
+                            _NET_MARKERSIZE_FRAC, _MIN_MARKERSIZE
 
 @testset "Placement coordinates" begin
     seq = "LLGDFFRK"
@@ -31,27 +32,37 @@ using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _WH
         @test wheelcoords("A")[1] ≈ Point2f(0, 1.5)
     end
 
-    @testset "net display coords" begin
+    @testset "display coords" begin
         raw = netcoords(seq)
         display = _net_display_coords(raw)
         @test first(extrema(first.(display))) ≈ 0.0
-        @test last(extrema(first.(display))) ≈ 2π
+        @test last(extrema(first.(display))) ≈ (length(seq) - 1) * _NET_X_PITCH
         @test length(display) == length(raw)
+
+        wheel_raw = wheelcoords(seq)
+        wheel_disp = _wheel_display_coords(wheel_raw)
+        rs = hypot.(first.(wheel_disp), last.(wheel_disp))
+        @test maximum(rs) ≈ 2.0
     end
 
     @testset "default_markersize" begin
-        net_coords = netcoords(seq)
-        wheel_coords = wheelcoords(seq)
-        net_display = _net_display_coords(net_coords)
-        @test default_markersize(net_coords, Net) > 0
-        @test default_markersize(wheel_coords, Wheel) > 0
+        short, long = "ACDEF", "LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES"
+        wheel_ms = max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC * _WHEEL_LAYOUT_CELL)
+        net_ms = max(_MIN_MARKERSIZE, _NET_MARKERSIZE_FRAC * _NET_LAYOUT_CELL)
+        @test default_markersize(netcoords(short), Net) == net_ms
+        @test default_markersize(netcoords(long), Net) == net_ms
+        @test default_markersize(wheelcoords(short), Wheel) == wheel_ms
+        @test default_markersize(wheelcoords(long), Wheel) == wheel_ms
+
         pair_min(coords) = minimum(
             hypot(coords[i][1] - coords[j][1], coords[i][2] - coords[j][2])
             for i in 1:length(coords) for j in (i + 1):length(coords))
-        @test default_markersize(net_coords, Net) <= pair_min(net_display)
-        @test default_markersize(wheel_coords, Wheel) <= pair_min(wheel_coords)
-        @test default_markersize([Point2f(0, 0)], Wheel) ==
-              max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC)
+        net_display = _net_display_coords(netcoords(long))
+        wheel_display = _wheel_display_coords(wheelcoords(long))
+        mag_display = _wheel_display_coords(wheelcoords("GIGKFLHSAKKFGKAFVGEIMNS"))
+        @test net_ms <= pair_min(net_display)
+        @test wheel_ms <= pair_min(wheel_display)
+        @test wheel_ms <= pair_min(mag_display)
     end
 end
 
@@ -75,7 +86,7 @@ end
         @test width(ax2.finallimits[]) > 0
         @test ax2.aspect[] isa DataAspect
 
-        # data limits and disk sizing are geometry-driven, not pixel-driven
+        # data limits are geometry-driven, not pixel-driven
         f_a = Figure(size = (240, 240))
         ax_a = Axis(f_a[1, 1])
         plotwheel!(ax_a, seq)
