@@ -1,45 +1,64 @@
 # Reproduces the example images in this directory:
 #
-#   ll37-wheels.{png,svg} — helical-wheel projections of LL-37, one per theme
-#   ll37-nets.{png,svg}   — net projections of LL-37, one per theme
+#   ll37-wheels.{png,svg}       — LL-37 helical wheels, one panel per theme
+#   ll37-nets.{png,svg}         — LL-37 nets, one panel per theme
+#   comparison-wheels.{png,svg} — LL-37 vs magainin-2 wheels (rows) × themes (cols)
+#   comparison-nets.{png,svg}   — LL-37 vs magainin-2 nets (rows) × themes (cols)
 #
 # Run from the package root:  julia --project examples/example.jl
 
 using CairoMakie
 using PeptideProjections
 
-# LL-37, the human cathelicidin antimicrobial peptide.
 const LL37 = "LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES"
+const MAGAININ2 = "GIGKFLHSAKKFGKAFVGEIMNS"
 
 const THEMES = [Colorful, ColorfulHydropathy, Hydropathy]
-
-# Match figure cell aspect to data limits so DataAspect panels fill their cells.
 const PANEL_WIDTH = 540
 
-net_row_h = let
-	f = Figure(size = (PANEL_WIDTH, PANEL_WIDTH))
+function net_row_height(seq; panel_width = PANEL_WIDTH)
+	f = Figure(size = (panel_width, panel_width))
 	ax = Axis(f[1, 1])
-	plotnet!(ax, LL37)
+	plotnet!(ax, seq)
 	lim = ax.finallimits[]
-	round(Int, PANEL_WIDTH * height(lim) / width(lim))
+	round(Int, panel_width * height(lim) / width(lim))
 end
 
-wheel_side = round(Int, PANEL_WIDTH / length(THEMES))
-
-# Wheels: one column per theme. plotwheel! sets DataAspect automatically.
-wheels = let f = Figure(size = (PANEL_WIDTH, wheel_side))
+function theme_row_figure(seq; projection = plotwheel!)
+	row_h = projection === plotnet! ? net_row_height(seq) : round(Int, PANEL_WIDTH / length(THEMES))
+	f = Figure(size = (PANEL_WIDTH, row_h))
 	axs = Axis[]
 	for (i, theme) in enumerate(THEMES)
 		ax = Axis(f[1, i]; title = string(theme))
-		plotwheel!(ax, LL37; theme = theme)
+		projection(ax, seq; theme = theme)
 		push!(axs, ax)
 	end
 	hidedecorations!.(axs)
 	f
 end
 
-# Nets: one row per theme; row height follows compressed net data aspect.
-nets = let f = Figure(size = (PANEL_WIDTH, net_row_h * length(THEMES)))
+function comparison_figure(seqs, labels; projection = plotwheel!)
+	probe = projection === plotnet! ? net_row_height(first(seqs)) :
+		round(Int, PANEL_WIDTH / length(THEMES))
+	row_h = round(Int, probe * 1.05)
+	f = Figure(size = (PANEL_WIDTH, row_h * length(seqs)))
+	axs = Axis[]
+	for (row, (seq, label)) in enumerate(zip(seqs, labels))
+		for (col, theme) in enumerate(THEMES)
+			title = col == 1 ? "$label — $(theme)" : string(theme)
+			ax = Axis(f[row, col]; title = title)
+			projection(ax, seq; theme = theme)
+			push!(axs, ax)
+		end
+	end
+	hidedecorations!.(axs)
+	f
+end
+
+ll37_wheels = theme_row_figure(LL37; projection = plotwheel!)
+ll37_nets = let
+	row_h = net_row_height(LL37)
+	f = Figure(size = (PANEL_WIDTH, row_h * length(THEMES)))
 	axs = Axis[]
 	for (i, theme) in enumerate(THEMES)
 		ax = Axis(f[i, 1]; title = string(theme))
@@ -50,7 +69,18 @@ nets = let f = Figure(size = (PANEL_WIDTH, net_row_h * length(THEMES)))
 	f
 end
 
-for ext in ("png", "svg")
-	save(joinpath(@__DIR__, "ll37-wheels.$ext"), wheels)
-	save(joinpath(@__DIR__, "ll37-nets.$ext"), nets)
+comparison_wheels = comparison_figure(
+	[LL37, MAGAININ2], ["LL-37", "Magainin 2"]; projection = plotwheel!)
+comparison_nets = comparison_figure(
+	[LL37, MAGAININ2], ["LL-37", "Magainin 2"]; projection = plotnet!)
+
+for (name, fig) in (
+	("ll37-wheels", ll37_wheels),
+	("ll37-nets", ll37_nets),
+	("comparison-wheels", comparison_wheels),
+	("comparison-nets", comparison_nets),
+)
+	for ext in ("png", "svg")
+		save(joinpath(@__DIR__, "$name.$ext"), fig)
+	end
 end
