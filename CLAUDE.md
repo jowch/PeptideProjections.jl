@@ -18,8 +18,8 @@ Run from the package root:
   (test files use `@testset` and `include` siblings via `test/runtests.jl`)
 - Instantiate dependencies: `julia --project -e 'using Pkg; Pkg.instantiate()'`
 - Regenerate the example figures: `julia --project examples/example.jl` (produces PNG
-  and SVG wheel/net comparison figures under `examples/`). Disk diameter is constant
-  across sequence lengths (fixed layout cell pitch).)
+  and SVG wheel/net comparison figures under `examples/`). Idealized disk diameter is
+  constant across sequence lengths; tighter custom `coords` shrink the default.
 
 Note `test/` has its own `Project.toml` — `Pkg.test()` resolves test-only deps
 (notably `Test`) from there.
@@ -52,8 +52,9 @@ Load order is fixed by `src/PeptideProjections.jl`: `util.jl` → `aa.jl` →
   actual drawing logic; the non-mutating forms set figure pixel size via `scale` and
   delegate. Residue disks are data-space `Circle` scatter markers sized by
   `markersize` (diameter in data units); labels use `rich` text with a subscripted
-  index inside each disk. `default_markersize` derives diameter from minimum pairwise
-  coord spacing. Net plots compress coords via `_net_display_coords` before drawing.
+  index inside each disk. `default_markersize` uses a fixed layout cell for idealized
+  placements and the minimum of that and pairwise display spacing for custom coords.
+  Net plots remap coords via `_net_display_coords` before drawing.
   `plotwheel!`/`plotnet!` set `DataAspect`, explicit `limits!`, and overwrite prior
   axis aspect/limits.
 

@@ -9,9 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- Default disk diameter is constant across sequence lengths, derived from fixed
-  layout cell pitch rather than per-sequence pairwise spacing. Wheels are scaled
-  to a fixed outer radius; nets use fixed index pitch.
+- `default_markersize` uses the minimum of fixed layout cell pitch and pairwise
+  display spacing so custom `coords` shrink disks to avoid overlap; idealized
+  layouts stay constant across sequence lengths.
+- Comparison example figures size net rows from the tallest sequence in each panel.
+- Removed unused `turn` / `sizefn` helpers from `plot.jl`.
 
 ## [0.4.0] - 2026-06-24
 

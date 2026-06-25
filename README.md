@@ -49,7 +49,7 @@ julia --project examples/example.jl
 - `plotnet(sequence, rot=0; theme=Colorful, scale=150, markersize=nothing, coords=netcoords(sequence, rot))` — create a net projection in a new figure. `scale` sets export pixel size only (`scale .* (4, 1.2)`).
 - `plotnet!(ax, sequence, rot=0; theme=Colorful, markersize=nothing, coords=netcoords(sequence, rot))` — draw a net on an existing axis. Applies display compression on the index/angular axes, sets `DataAspect`, and sets limits from disk extent.
 
-`markersize` is the residue disk **diameter in data units**; when omitted, `default_markersize` sizes disks from placement geometry so they do not overlap.
+`markersize` is the residue disk **diameter in data units**; when omitted, `default_markersize` sizes disks from layout geometry (constant for idealized placements; smaller when custom `coords` are tighter). Pass an explicit `markersize` to override.
 
 Pass `coords` (a `Vector{Point2f}`, one point per residue) to plot measured positions instead of the idealized helical placement.
 
@@ -57,8 +57,8 @@ Pass `coords` (a `Vector{Point2f}`, one point per residue) to plot measured posi
 
 - `netcoords(sequence, rot=0) -> Vector{Point2f}` — idealized net placement; the angular coordinate is in radians with period `2π`
 - `wheelcoords(sequence, rot=0) -> Vector{Point2f}` — idealized helical-wheel placement
-- Default disk diameter is constant across sequence lengths (fixed layout cell pitch).
-- `default_markersize(coords, Wheel)` / `default_markersize(coords, Net)` — default disk diameter from layout geometry (`coords` accepted for API compatibility)
+- Default disk diameter is constant across sequence lengths for idealized layouts; custom `coords` may shrink the default.
+- `default_markersize(coords, Wheel)` / `default_markersize(coords, Net)` — default disk diameter from layout geometry and display spacing
 
 ### Theme Colors
 
