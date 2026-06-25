@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Default disk diameter is constant across sequence lengths, derived from fixed
+  layout cell pitch rather than per-sequence pairwise spacing. Wheels are scaled
+  to a fixed outer radius; nets use fixed index pitch.
+
 ## [0.4.0] - 2026-06-24
 
 ### Added

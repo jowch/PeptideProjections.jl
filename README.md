@@ -37,6 +37,9 @@ julia --project examples/example.jl
 ![wheel examples](examples/ll37-wheels.svg)
 ![net examples](examples/ll37-nets.svg)
 
+![LL-37 vs magainin-2 wheels](examples/comparison-wheels.svg)
+![LL-37 vs magainin-2 nets](examples/comparison-nets.svg)
+
 ## API Reference
 
 ### Main Functions
@@ -54,7 +57,8 @@ Pass `coords` (a `Vector{Point2f}`, one point per residue) to plot measured posi
 
 - `netcoords(sequence, rot=0) -> Vector{Point2f}` — idealized net placement; the angular coordinate is in radians with period `2π`
 - `wheelcoords(sequence, rot=0) -> Vector{Point2f}` — idealized helical-wheel placement
-- `default_markersize(coords, Wheel)` / `default_markersize(coords, Net)` — default disk diameter from pairwise spacing (`Net` applies the same display compression as `plotnet!`)
+- Default disk diameter is constant across sequence lengths (fixed layout cell pitch).
+- `default_markersize(coords, Wheel)` / `default_markersize(coords, Net)` — default disk diameter from layout geometry (`coords` accepted for API compatibility)
 
 ### Theme Colors
 

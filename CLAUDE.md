@@ -18,7 +18,8 @@ Run from the package root:
   (test files use `@testset` and `include` siblings via `test/runtests.jl`)
 - Instantiate dependencies: `julia --project -e 'using Pkg; Pkg.instantiate()'`
 - Regenerate the example figures: `julia --project examples/example.jl` (produces PNG
-  and SVG wheel/net comparison figures under `examples/`)
+  and SVG wheel/net comparison figures under `examples/`). Disk diameter is constant
+  across sequence lengths (fixed layout cell pitch).)
 
 Note `test/` has its own `Project.toml` — `Pkg.test()` resolves test-only deps
 (notably `Test`) from there.
