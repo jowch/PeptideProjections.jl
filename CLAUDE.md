@@ -17,8 +17,8 @@ Run from the package root:
   `julia --project -e 'using PeptideProjections; include("test/themes.jl")'`
   (test files use `@testset` and `include` siblings via `test/runtests.jl`)
 - Instantiate dependencies: `julia --project -e 'using Pkg; Pkg.instantiate()'`
-- Regenerate the example figures: `julia --project example.jl` (produces the wheel
-  and net comparison figures saved under `examples/`)
+- Regenerate the example figures: `julia --project examples/example.jl` (produces PNG
+  and SVG wheel/net comparison figures under `examples/`)
 
 Note `test/` has its own `Project.toml` — `Pkg.test()` resolves test-only deps
 (notably `Test`) from there.
@@ -45,15 +45,19 @@ Load order is fixed by `src/PeptideProjections.jl`: `util.jl` → `aa.jl` →
   theme: create `src/themes/<name>.jl`, `include` it in `themes.jl`, and export it
   from both `Themes` and the top-level module.
 
-- **`src/plot.jl`** — projection rendering. `Wheel` and `Net` are abstract dispatch
-  tags for the `turn`/`sizefn` geometry helpers. Public API: `plotwheel`/`plotnet`
-  create a new `Figure`; `plotwheel!`/`plotnet!` draw onto an existing Makie `Axis`.
-  The mutating `!` forms hold the actual drawing logic; the non-mutating forms just
-  set up the figure and delegate. Each residue is rendered as a scatter marker plus
-  two `text!` overlays (residue letter and sequence index).
+- **`src/plot.jl`** — projection rendering. `Wheel` and `Net` are exported abstract
+  dispatch tags. Public API: `plotwheel`/`plotnet` create a new `Figure`; `plotwheel!`/
+  `plotnet!` draw onto an existing Makie `Axis`. The mutating `!` forms hold the
+  actual drawing logic; the non-mutating forms set figure pixel size via `scale` and
+  delegate. Residue disks are data-space `Circle` scatter markers sized by
+  `markersize` (diameter in data units); labels use `rich` text with a subscripted
+  index inside each disk. `default_markersize` derives diameter from minimum pairwise
+  coord spacing. Net plots compress coords via `_net_display_coords` before drawing.
+  `plotwheel!`/`plotnet!` set `DataAspect`, explicit `limits!`, and overwrite prior
+  axis aspect/limits.
 
-- **`src/util.jl`** — small color/number helpers (`rescale`, `darken`, `lighten`,
-  `clamp01`).
+- **`src/util.jl`** — color/number helpers (`rescale`, `darken`, `lighten`, `clamp01`,
+  `text_on` for WCAG contrast text on solid fills).
 
 ## Conventions
 

@@ -5,6 +5,24 @@ All notable changes to PeptideProjections.jl are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Data-space residue disks with geometry-driven `default_markersize` and explicit
+  axis limits; net display compression for compact panels.
+- `text_on` for automatic label contrast; SVG example exports.
+- Exported `Wheel` and `Net` dispatch tags.
+
+### Changed
+
+- **Breaking:** `plotwheel!` / `plotnet!` no longer accept `scale`; use `markersize`
+  (data-unit diameter) instead. `scale` on non-mutating forms sets figure pixel size
+  only.
+- **Breaking:** `themetextcolor` is now derived from marker fill via WCAG luminance.
+- Net default standalone figure size is `scale .* (4, 1.2)` (was sequence-length
+  dependent).
+
 ## [0.3.0] - 2026-05-18
 
 First release registered in the Julia General registry.
