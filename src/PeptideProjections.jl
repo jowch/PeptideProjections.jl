@@ -14,7 +14,7 @@ export
     RESIDUES_PER_TURN, RADIANS_PER_TURN,
 
     # Placement
-    netcoords, wheelcoords,
+    netcoords, wheelcoords, default_markersize, Wheel, Net,
 
     # Plot functions
     plotwheel, plotwheel!, plotnet, plotnet!
