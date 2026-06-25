@@ -2,8 +2,7 @@ using Test
 using CairoMakie
 using PeptideProjections
 using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _wheel_display_coords,
-                            _NET_X_PITCH, _NET_LAYOUT_CELL, _WHEEL_LAYOUT_CELL, _WHEEL_MARKERSIZE_FRAC,
-                            _NET_MARKERSIZE_FRAC, _MIN_MARKERSIZE
+                            _NET_X_PITCH, _NET_MARKERSIZE_FRAC
 
 @testset "Placement coordinates" begin
     seq = "LLGDFFRK"
@@ -43,16 +42,21 @@ using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _wh
         wheel_disp = _wheel_display_coords(wheel_raw)
         rs = hypot.(first.(wheel_disp), last.(wheel_disp))
         @test maximum(rs) ≈ 2.0
+
+        ll37 = "LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES"
+        @test last(extrema(first.(_net_display_coords(netcoords(ll37))))) ≈ 2π
+        @test maximum(hypot.(first.(wheelcoords(ll37)), last.(wheelcoords(ll37)))) ≈ 2.5
     end
 
     @testset "default_markersize" begin
         short, long = "ACDEF", "LLGDFFRKSKEKIGKEFKRIVQRIKDFLRNLVPRTES"
-        wheel_ms = max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC * _WHEEL_LAYOUT_CELL)
-        net_ms = max(_MIN_MARKERSIZE, _NET_MARKERSIZE_FRAC * _NET_LAYOUT_CELL)
-        @test default_markersize(netcoords(short), Net) == net_ms
-        @test default_markersize(netcoords(long), Net) == net_ms
-        @test default_markersize(wheelcoords(short), Wheel) == wheel_ms
-        @test default_markersize(wheelcoords(long), Wheel) == wheel_ms
+        mag = "GIGKFLHSAKKFGKAFVGEIMNS"
+        net_ms = default_markersize(netcoords(long), Net)
+        wheel_ms = default_markersize(wheelcoords(long), Wheel)
+        @test default_markersize(netcoords(mag), Net) ≈ net_ms
+        @test default_markersize(wheelcoords(mag), Wheel) ≈ wheel_ms rtol = 1e-6
+        @test default_markersize(netcoords(short), Net) ≈ net_ms rtol = 1e-6
+        @test default_markersize(wheelcoords(short), Wheel) ≈ wheel_ms rtol = 1e-6
 
         pair_min(coords) = minimum(
             hypot(coords[i][1] - coords[j][1], coords[i][2] - coords[j][2])
@@ -63,6 +67,11 @@ using PeptideProjections: RADIANS_PER_TURN, Wheel, Net, _net_display_coords, _wh
         @test net_ms <= pair_min(net_display)
         @test wheel_ms <= pair_min(wheel_display)
         @test wheel_ms <= pair_min(mag_display)
+
+        custom = [Point2f(i, 0.0) for i in 1:8]
+        custom_ms = default_markersize(custom, Net)
+        @test custom_ms < net_ms
+        @test custom_ms <= _NET_MARKERSIZE_FRAC * pair_min(_net_display_coords(custom))
     end
 end
 

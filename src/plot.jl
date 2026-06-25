@@ -37,20 +37,6 @@ function wheelcoords(seq::AbstractString, rot = 0)
 	coords
 end
 
-"""
-    turn(i, rot)
-
-Calculate the vertical position of the i-th residue on the wheel.
-"""
-turn(::Type{Wheel}, i, rot) = sin.((i .- 1) * RADIANS_PER_TURN .- rot)
-
-"""
-    sizefn(i, rot; s = 10)
-
-Calculate the size of the i-th residue on the wheel.
-"""
-sizefn(::Type{Wheel}, i, rot; s = 10) = s * (cos.((i .- 1) * RADIANS_PER_TURN .- rot) / 4 .+ 0.75)
-
 const _NET_MARKERSIZE_FRAC = 0.85
 const _WHEEL_MARKERSIZE_FRAC = 0.75
 const _LETTER_MARKERSIZE_FRAC = 0.45   # fraction of disk diameter (data units)
@@ -61,13 +47,28 @@ const _NET_Y_COMPACT_FRAC = 0.25   # retain 25% of angular (vertical) span
 const _MIN_MARKERSIZE = 0.06
 
 # Fixed layout pitch (data units). Disk diameter = frac × layout cell, same for all sequences.
-const _NET_X_PITCH = 2π / 36
-const _NET_Y_PITCH = RADIANS_PER_TURN * _NET_Y_COMPACT_FRAC
-const _NET_LAYOUT_CELL = hypot(_NET_X_PITCH, _NET_Y_PITCH)
+const _NET_X_PITCH = 2π / 36   # LL-37 (37 residues) spans exactly 2π on the net index axis
+const _NET_LAYOUT_CELL = hypot(_NET_X_PITCH, RADIANS_PER_TURN * _NET_Y_COMPACT_FRAC)
 const _WHEEL_R_MAX = 2.0
-const _WHEEL_RADIAL_STEP = 0.5   # radius increment per turn in wheelcoords
 const _WHEEL_RMAX_LAYOUT = 2.5   # outer radius of LL-37 on the ideal spiral
-const _WHEEL_LAYOUT_CELL = _WHEEL_RADIAL_STEP * _WHEEL_R_MAX / _WHEEL_RMAX_LAYOUT
+const _WHEEL_LAYOUT_CELL = 0.5 * _WHEEL_R_MAX / _WHEEL_RMAX_LAYOUT
+
+function _min_pairwise_spacing(coords)
+	n = length(coords)
+	n <= 1 && return 1.0
+	dmin = Inf
+	for i in 1:n, j in (i + 1):n
+		a, b = coords[i], coords[j]
+		dmin = min(dmin, hypot(a[1] - b[1], a[2] - b[2]))
+	end
+	dmin
+end
+
+function _layout_markersize(frac, layout_cell, display)
+	fixed = frac * layout_cell
+	adaptive = frac * _min_pairwise_spacing(display)
+	max(_MIN_MARKERSIZE, min(fixed, adaptive))
+end
 
 # Net: fixed index pitch on x, compressed y (angle).
 function _net_display_coords(coords)
@@ -91,17 +92,20 @@ end
 """
     default_markersize(coords, projection) -> Float64
 
-Default residue disk **diameter** in data units. Uses a fixed layout cell derived
-from idealized net/wheel geometry so disk size is consistent across sequence
-lengths. Pass `Wheel` or `Net` as the second argument (`coords` is accepted for
-API compatibility but not used). Override with the `markersize` keyword when
-plotting custom placements.
+Default residue disk **diameter** in data units. Idealized layouts use a fixed
+layout cell so disk size is consistent across sequence lengths; tighter custom
+`coords` shrink the default to avoid overlap. Pass `Wheel` or `Net` as the second
+argument. Override with the `markersize` keyword when needed.
 """
-default_markersize(::Any, ::Type{Net}) =
-	max(_MIN_MARKERSIZE, _NET_MARKERSIZE_FRAC * _NET_LAYOUT_CELL)
+function default_markersize(coords, ::Type{Net})
+	display = _net_display_coords(coords)
+	_layout_markersize(_NET_MARKERSIZE_FRAC, _NET_LAYOUT_CELL, display)
+end
 
-default_markersize(::Any, ::Type{Wheel}) =
-	max(_MIN_MARKERSIZE, _WHEEL_MARKERSIZE_FRAC * _WHEEL_LAYOUT_CELL)
+function default_markersize(coords, ::Type{Wheel})
+	display = _wheel_display_coords(coords)
+	_layout_markersize(_WHEEL_MARKERSIZE_FRAC, _WHEEL_LAYOUT_CELL, display)
+end
 
 function _content_limits(coords, markersize; square = false, pad_frac = _NET_LIMIT_PAD_FRAC)
 	xs = getindex.(coords, 1)
@@ -120,7 +124,7 @@ function _content_limits(coords, markersize; square = false, pad_frac = _NET_LIM
 end
 
 # Draw one themed disk plus stacked letter/index labels per residue.
-function _drawresidues!(ax, seq::AbstractString, coords, projection;
+function _drawresidues!(ax, seq::AbstractString, coords;
                         theme = Colorful, markersize)
 	stroke_w = max(0.02 * markersize, 0.01)
 	letter_fs = _LETTER_MARKERSIZE_FRAC * markersize
@@ -157,7 +161,8 @@ plot measured positions instead, in which case `rot` is ignored.
 
 Disk **diameter** defaults from [`default_markersize`](@ref); pass `markersize`
 (data units) to override. Coords are scaled so the outermost ring fits a fixed
-radius, giving consistent disk size across sequence lengths. Sets
+radius, giving consistent disk size across sequence lengths for idealized layouts.
+Tighter custom `coords` shrink the default diameter automatically. Sets
 [`DataAspect`](@ref) and axis limits from disk extent (overwriting any prior
 `aspect` and `limits` on `ax`).
 """
@@ -170,7 +175,7 @@ function plotwheel!(ax, seq::AbstractString, rot = 0; theme = Colorful, markersi
 	ms = something(markersize, default_markersize(coords, Wheel))
 	ax.aspect[] = DataAspect()
 	limits!(ax, _content_limits(display, ms; square = true, pad_frac = _WHEEL_LIMIT_PAD_FRAC)...)
-	_drawresidues!(ax, seq, display, Wheel; theme, markersize = ms)
+	_drawresidues!(ax, seq, display; theme, markersize = ms)
 
 	nothing
 end
@@ -202,8 +207,9 @@ instead, in which case `rot` is ignored.
 
 Disk **diameter** defaults from [`default_markersize`](@ref); pass `markersize`
 (data units) to override. The index axis uses fixed pitch and the angular axis is
-compressed for a compact panel with [`DataAspect`](@ref). Sets axis limits from
-disk extent (overwriting any prior `aspect` and `limits` on `ax`).
+compressed for a compact panel with [`DataAspect`](@ref). Idealized layouts use
+a constant default diameter; tighter custom `coords` shrink it automatically. Sets
+axis limits from disk extent (overwriting any prior `aspect` and `limits` on `ax`).
 """
 function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, markersize = nothing,
                   coords = netcoords(seq, rot))
@@ -214,7 +220,7 @@ function plotnet!(ax, seq::AbstractString, rot = 0; theme = Colorful, markersize
 	ms = something(markersize, default_markersize(coords, Net))
 	ax.aspect[] = DataAspect()
 	limits!(ax, _content_limits(display, ms; pad_frac = _NET_LIMIT_PAD_FRAC)...)
-	_drawresidues!(ax, seq, display, Net; theme, markersize = ms)
+	_drawresidues!(ax, seq, display; theme, markersize = ms)
 
 	nothing
 end
