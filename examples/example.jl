@@ -38,9 +38,11 @@ function theme_row_figure(seq; projection = plotwheel!)
 end
 
 function comparison_figure(seqs, labels; projection = plotwheel!)
-	probe = projection === plotnet! ? net_row_height(first(seqs)) :
+	row_h = if projection === plotnet!
+		maximum(net_row_height(s) for s in seqs)
+	else
 		round(Int, PANEL_WIDTH / length(THEMES))
-	row_h = round(Int, probe * 1.05)
+	end
 	f = Figure(size = (PANEL_WIDTH, row_h * length(seqs)))
 	axs = Axis[]
 	for (row, (seq, label)) in enumerate(zip(seqs, labels))
