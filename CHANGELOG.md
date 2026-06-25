@@ -7,11 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-06-25
+
+### Added
+
+- LL-37 vs magainin-2 comparison example figures (wheels and nets).
+
 ### Changed
 
-- `default_markersize` uses the minimum of fixed layout cell pitch and pairwise
-  display spacing so custom `coords` shrink disks to avoid overlap; idealized
-  layouts stay constant across sequence lengths.
+- Default disk diameter is constant across sequence lengths for idealized layouts,
+  derived from fixed layout cell pitch; wheels scale to a fixed outer radius and
+  nets use fixed index pitch.
+- `default_markersize` caps diameter from pairwise display spacing so custom
+  `coords` shrink disks to avoid overlap.
 - Comparison example figures size net rows from the tallest sequence in each panel.
 - Removed unused `turn` / `sizefn` helpers from `plot.jl`.
 
