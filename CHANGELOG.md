@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-06-24
+
 ### Added
 
 - Data-space residue disks with geometry-driven `default_markersize` and explicit
@@ -47,4 +49,6 @@ First release registered in the Julia General registry.
 - Renamed the theme color functions `color`/`textcolor` to
   `themecolor`/`themetextcolor`.
 
+[Unreleased]: https://github.com/jowch/PeptideProjections.jl/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/jowch/PeptideProjections.jl/releases/tag/v0.4.0
 [0.3.0]: https://github.com/jowch/PeptideProjections.jl/releases/tag/v0.3.0
