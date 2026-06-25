@@ -1,7 +1,8 @@
 module Themes
     using Colors
 
-    import ..PeptideProjections: ispositive, isnegative, ischarged, ispolar, ishydrophobic, isspecial
+    import ..PeptideProjections: ispositive, isnegative, ischarged, ispolar, ishydrophobic, isspecial,
+                                 text_on
 
     export AbstractTheme, Hydropathy, Colorful, ColorfulHydropathy
 
@@ -26,7 +27,8 @@ module Themes
 
     Return the label text color for the given amino acid for the provided theme.
     """
-    themetextcolor(::Type{<:AbstractTheme}, aa::AbstractChar) = colorant"black"
+    themetextcolor(theme::Type{<:AbstractTheme}, aa::AbstractChar) =
+        text_on(themecolor(theme, aa))
 
     include("hydropathy.jl")
     include("colorful.jl")

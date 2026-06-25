@@ -13,10 +13,3 @@ function themecolor(::Type{ColorfulHydropathy}, aa::AbstractChar)
     end
 end
 
-function themetextcolor(::Type{ColorfulHydropathy}, aa::AbstractChar)
-    if ishydrophobic(aa)
-        return colorant"white"
-    else
-        return colorant"black"
-    end
-end

@@ -55,3 +55,23 @@ clamp(x, lo = 0, hi = 1) = x < lo ? lo : x > hi ? hi : x
 Clamp a value `x` to be between 0 and 1.
 """
 clamp01(x) = clamp(x)
+
+function _linear_srgb(c)
+	c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055)^2.4
+end
+
+"""
+    relative_luminance(color) -> Float64
+
+WCAG 2.x relative luminance of an sRGB color (0 = black, 1 = white).
+"""
+function relative_luminance((; r, g, b)::Colorant)
+	0.2126 * _linear_srgb(r) + 0.7152 * _linear_srgb(g) + 0.0722 * _linear_srgb(b)
+end
+
+"""
+    text_on(bg) -> Colorant
+
+Pick black or white label text for readable contrast on solid fill color `bg`.
+"""
+text_on(bg::Colorant) = relative_luminance(bg) < 0.5 ? colorant"white" : colorant"black"

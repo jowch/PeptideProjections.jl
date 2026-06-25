@@ -19,14 +19,3 @@ function themecolor(::Type{Colorful}, aa::AbstractChar)
     end
 end
 
-function themetextcolor(::Type{Colorful}, aa::AbstractChar)
-    if ispositive(aa) || isnegative(aa)
-        return colorant"white"
-    #    elseif ispolar(aa)
-    #        return COLOR_POLAR
-    # elseif isspecial(aa)
-    # 	return colorant"black"
-    else
-        return colorant"black"
-    end
-end
